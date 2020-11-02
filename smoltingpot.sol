@@ -416,20 +416,20 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
         return _totalSupply;
     }
 
-    // returns the total claimed ting
+    // returns the total claimed smol
     // this is just purely used to display the total smol claimed by users on the frontend
     function totalClaimed() public view returns (uint256) {
         return _totalClaimed;
     }
 
-    // add ting claimed
+    // add smol claimed
     function addClaimed(uint256 _amount) public onlyCanTransfer {
         _totalClaimed = _totalClaimed.add(_amount);
     }
 
-    // set ting claimed to a custom value, for if we wanna reset the counter anytime
+    // set smol claimed to a custom value, for if we wanna reset the counter anytime
     function setClaimed(uint256 _amount) public onlyCanTransfer {
-        require(_amount >= 0, "nonono cannot be negative");
+        require(_amount >= 0, "cannot be negative");
         _totalClaimed = _amount;
     }
 
@@ -500,13 +500,20 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
     }
 }
 
+/*
+* @dev Contract from where the multiplier is taken.
+*/
+interface SmolMuseum {
+    function getBoosterForUser(address _address, uint256 _pid) external view returns (uint256);
+}
+
 contract SmolTingPot is Ownable {
     using SafeMath for uint256;
 
     // info of each user.
     struct UserInfo {
         uint256 amount; // how many tokens the user has provided.
-        uint256 rewardDebt; // reward debt. see explanation below.
+        uint256 rewardDebt; // block of last withdraw/deposit - can see it as user's lastUpdate
         //
         // we do some fancy math here. basically, any point in time, the amount of TINGs
         // entitled to a user but is pending to be distributed is:
@@ -514,10 +521,9 @@ contract SmolTingPot is Ownable {
         //   pending reward = (user.amount * pool.accTingPerShare) - user.rewardDebt
         //
         // whenever a user deposits or withdraws tokens to a pool. Here's what happens:
-        //   1. the pool's `accTingPerShare` (and `lastRewardBlock`) gets updated.
-        //   2. user receives the pending reward sent to his/her address.
-        //   3. user's `amount` gets updated.
-        //   4. user's `rewardDebt` gets updated.
+        //   1. user's pending reward is minted to his/her address.
+        //   2. user's `amount` gets updated.
+        //   3. user's `lastUpdate` gets updated.
     }
 
     // info of each pool.
@@ -539,6 +545,7 @@ contract SmolTingPot is Ownable {
     mapping(address => uint256) public tokenPID;
 
     SmolTing public Ting;
+    SmolMuseum public Museum;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -548,8 +555,9 @@ contract SmolTingPot is Ownable {
         uint256 amount
     );
 
-    constructor(SmolTing _tingAddress, address _treasuryAddr) public {
+    constructor(SmolTing _tingAddress, SmolMuseum _smolMuseumAddress, address _treasuryAddr) public {
         Ting = _tingAddress;
+        Museum = _smolMuseumAddress;
         treasuryAddr = _treasuryAddr;
     }
 
@@ -584,7 +592,10 @@ contract SmolTingPot is Ownable {
     // set the amount of TINGs generated per day for each token staked
     function setTingsPerDay(uint256 pid, uint256 amount) public onlyOwner {
         require(amount >= 0, "hey smol tings per day cannot be negative");
-        updatePool(pid);
+        uint256 blockTime = block.timestamp;
+        uint256 tingReward = blockTime.sub(poolInfo[pid].lastUpdateTime).mul(poolInfo[pid].tingsPerDay).div(86400);
+        poolInfo[pid].accTingPerShare = poolInfo[pid].accTingPerShare.add(tingReward.mul(1e12));
+        poolInfo[pid].lastUpdateTime = block.timestamp;
         poolInfo[pid].tingsPerDay = amount;
     }
 
@@ -593,13 +604,15 @@ contract SmolTingPot is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 blockTime = block.timestamp;
-        uint256 accTingPerShare = pool.accTingPerShare;
+        uint256 accTing = pool.accTingPerShare;
         uint256 tokenSupply = pool.token.balanceOf(address(this));
         if (blockTime > pool.lastUpdateTime && tokenSupply != 0) {
-            uint256 tingReward = pendingTingOfPool(_pid);
-            accTingPerShare = accTingPerShare.add(tingReward.mul(1e12).div(tokenSupply));
+            uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400);
+            accTing = accTing.add(tingReward.mul(1e12));					// reward Clock at t time
         }
-        return user.amount.mul(accTingPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
+        if (Museum.getBoosterForUser(_user, _pid) > 0) pending = pending.mul(Museum.getBoosterForUser(_user, _pid).add(1));
+        return pending;
     }
 
     // view function to calculate the total pending TINGs of address across all pools
@@ -613,55 +626,15 @@ contract SmolTingPot is Ownable {
         return total;
     }
 
-    // view function to see pending TINGs on the whole pool
-    function pendingTingOfPool(uint256 _pid) public view returns (uint256) {
-        PoolInfo storage pool = poolInfo[_pid];
-        uint256 blockTime = block.timestamp;
-        uint256 tokenSupply = pool.token.balanceOf(address(this));
-        return blockTime.sub(pool.lastUpdateTime).mul(tokenSupply.mul(pool.tingsPerDay).div(86400));
-    }
-
     // harvest pending TINGs of a list of pools.
     // be careful of beeg gas spending if you try to harvest a big number of pools
     // might be worth it checking in the frontend for the pool IDs with pending ting for this address and only harvest those
     function rugPull(uint256[] memory _pids) public {
         for (uint i=0; i < _pids.length; i++) {
-            withdraw(_pids[i], 0);
+            withdraw(_pids[i], 0, msg.sender);
         }
     }
 
-    // update reward variables for all pools. be careful of beeg gas spending!
-    function rugPullAll() public {
-        uint256 length = poolInfo.length;
-        for (uint256 pid = 0; pid < length; ++pid) {
-            updatePool(pid);
-        }
-    }
-
-    // update reward variables of the given pool to be up-to-date.
-    function updatePool(uint256 _pid) public {
-        PoolInfo storage pool = poolInfo[_pid];
-        if (block.timestamp <= pool.lastUpdateTime) {
-            return;
-        }
-        if (pool.tingsPerDay == 0) {
-            pool.lastUpdateTime = block.timestamp;
-            return;
-        }
-        uint256 tokenSupply = pool.token.balanceOf(address(this));
-        if (tokenSupply == 0) {
-            pool.lastUpdateTime = block.timestamp;
-            return;
-        }
-
-        // return blockTime.sub(lastUpdateTime[account]).mul(balanceOf(account).mul(tingsPerDay).div(86400));
-        uint256 tingReward = pendingTingOfPool(_pid);
-        Ting.mint(treasuryAddr, tingReward.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
-        Ting.mint(address(this), tingReward);
-
-        pool.accTingPerShare = pool.accTingPerShare.add(tingReward.mul(1e12).div(tokenSupply));
-        pool.lastUpdateTime = block.timestamp;
-    }
 
     // deposit LP tokens to pool for TING allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
@@ -670,22 +643,40 @@ contract SmolTingPot is Ownable {
 
         require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
 
-        updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accTingPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 blockTime = block.timestamp;
+	    uint256 accTing = pool.accTingPerShare;
+        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
+        accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
+
+        uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
         user.amount = user.amount.add(_amount);
-        user.rewardDebt = user.amount.mul(pool.accTingPerShare).div(1e12);
-        if (pending > 0) safeTingTransfer(msg.sender, pending);
+        user.rewardDebt = user.amount.mul(accTing).div(1e12);
+        
+        //Get the additional booster applicable for the user and mint the TINGs accordingly
+        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
+        if (pendingWithBooster > 0) {
+		    Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
+        	Ting.mint(msg.sender, pendingWithBooster);							
+	    }
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
     // withdraw tokens from pool.
-    function withdraw(uint256 _pid, uint256 _amount) public {
+    function withdraw(uint256 _pid, uint256 _amount, address _staker) public {
+        address staker = _staker;
         PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][msg.sender];
+        UserInfo storage user = userInfo[_pid][staker];
+
         require(user.amount >= _amount, "withdraw: not good");
-        updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accTingPerShare).div(1e12).sub(user.rewardDebt);
+        require(msg.sender == staker || _amount == 0);
+
+	    uint256 accTing = pool.accTingPerShare;
+        uint256 tingReward = block.timestamp.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
+        accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
+
+        uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
+        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(staker, _pid).add(1));
 
         // in case the maxstake has been lowered and address is above maxstake, we force it to withdraw what is above current maxstake
         // user can delay his/her withdraw/harvest to take advantage of a reducing of maxstake,
@@ -696,10 +687,17 @@ contract SmolTingPot is Ownable {
         }
 
         user.amount = user.amount.sub(_amount);
-        user.rewardDebt = user.amount.mul(pool.accTingPerShare).div(1e12);
-        safeTingTransfer(msg.sender, pending);
-        pool.token.transfer(address(msg.sender), _amount);
-        emit Withdraw(msg.sender, _pid, _amount);
+        user.rewardDebt = user.amount.mul(accTing).div(1e12);
+        
+        //Get the additional booster applicable for the user and mint the TINGs accordingly
+        if(pendingWithBooster > 0)
+        {
+            Ting.mint(treasuryAddr, pendingWithBooster.div(40)); 
+            Ting.mint(staker, pendingWithBooster);
+        }
+
+        pool.token.transfer(address(staker), _amount);
+        emit Withdraw(staker, _pid, _amount);
     }
 
     // withdraw without caring about rewards. EMERGENCY ONLY.
@@ -714,21 +712,15 @@ contract SmolTingPot is Ownable {
         emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
-    // safe ting transfer function, just in case if rounding error causes pool to not have enough TINGs.
-    function safeTingTransfer(address _to, uint256 _amount) internal {
-        uint256 tingBal = Ting.balanceOf(address(this));
-        if (_amount > tingBal) {
-            Ting.transfer(_to, tingBal);
-            Ting.addClaimed(tingBal);
-        } else {
-            Ting.transfer(_to, _amount);
-            Ting.addClaimed(_amount);
-        }
-    }
 
     // update dev address by the previous dev.
     function treasury(address _treasuryAddr) public {
         require(msg.sender == treasuryAddr, "must be called from current treasury address");
         treasuryAddr = _treasuryAddr;
+    }
+    
+    // update Museum address if the booster logic changed.
+    function updateSmolMuseumAddress(SmolMuseum _smolMuseumAddress) public onlyOwner{
+        Museum = _smolMuseumAddress;
     }
 }
