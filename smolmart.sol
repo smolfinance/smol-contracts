@@ -124,7 +124,7 @@ contract Ownable is Context {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(newOwner != address(0), "ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -218,7 +218,7 @@ library Roles {
      * @dev Give an account access to this role.
      */
     function add(Role storage role, address account) internal {
-        require(!has(role, account), "Roles: account already has role");
+        require(!has(role, account), "roles: account already has role");
         role.bearer[account] = true;
     }
 
@@ -226,7 +226,7 @@ library Roles {
      * @dev Remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "Roles: account does not have role");
+        require(has(role, account), "roles: account does not have role");
         role.bearer[account] = false;
     }
 
@@ -235,7 +235,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "Roles: account is the zero address");
+        require(account != address(0), "roles: account is the zero address");
         return role.bearer[account];
     }
 }
@@ -253,7 +253,7 @@ contract MinterRole is Context {
     }
 
     modifier onlyMinter() {
-        require(isMinter(_msgSender()), "MinterRole: caller does not have the Minter role");
+        require(isMinter(_msgSender()), "minterrrole: caller does not have the minter role");
         _;
     }
 
@@ -297,7 +297,7 @@ contract WhitelistAdminRole is Context {
     }
 
     modifier onlyWhitelistAdmin() {
-        require(isWhitelistAdmin(_msgSender()), "WhitelistAdminRole: caller does not have the WhitelistAdmin role");
+        require(isWhitelistAdmin(_msgSender()), "whitelistadminrole: caller does not have the whitelistadmin role");
         _;
     }
 
@@ -360,7 +360,7 @@ library SafeMath {
         }
 
         uint256 c = a * b;
-        require(c / a == b, "SafeMath#mul: OVERFLOW");
+        require(c / a == b, "safemath#mul: OVERFLOW");
 
         return c;
     }
@@ -370,7 +370,7 @@ library SafeMath {
      */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // Solidity only automatically asserts when dividing by 0
-        require(b > 0, "SafeMath#div: DIVISION_BY_ZERO");
+        require(b > 0, "safemath#div: DIVISION_BY_ZERO");
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
@@ -381,7 +381,7 @@ library SafeMath {
      * @dev Subtracts two unsigned integers, reverts on overflow (i.e. if subtrahend is greater than minuend).
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "SafeMath#sub: UNDERFLOW");
+        require(b <= a, "safemath#sub: UNDERFLOW");
         uint256 c = a - b;
 
         return c;
@@ -392,7 +392,7 @@ library SafeMath {
      */
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
-        require(c >= a, "SafeMath#add: OVERFLOW");
+        require(c >= a, "safemath#add: OVERFLOW");
 
         return c;
     }
@@ -402,7 +402,7 @@ library SafeMath {
      * reverts when dividing by zero.
      */
     function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b != 0, "SafeMath#mod: DIVISION_BY_ZERO");
+        require(b != 0, "safemath#mod: DIVISION_BY_ZERO");
         return a % b;
     }
 
@@ -641,8 +641,8 @@ contract ERC1155 is IERC165 {
     function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount, bytes memory _data)
     public
     {
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155#safeTransferFrom: INVALID_OPERATOR");
-        require(_to != address(0),"ERC1155#safeTransferFrom: INVALID_RECIPIENT");
+        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "erc1155#safetransferfrom: INVALID_OPERATOR");
+        require(_to != address(0),"erc1155#safetransferfrom: INVALID_RECIPIENT");
         // require(_amount >= balances[_from][_id]) is not necessary since checked with safemath operations
 
         _safeTransferFrom(_from, _to, _id, _amount);
@@ -661,8 +661,8 @@ contract ERC1155 is IERC165 {
     public
     {
         // Requirements
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155#safeBatchTransferFrom: INVALID_OPERATOR");
-        require(_to != address(0), "ERC1155#safeBatchTransferFrom: INVALID_RECIPIENT");
+        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "erc1155#safebatchtransferfrom: INVALID_OPERATOR");
+        require(_to != address(0), "erc1155#safebatchtransferfrom: INVALID_RECIPIENT");
 
         _safeBatchTransferFrom(_from, _to, _ids, _amounts);
         _callonERC1155BatchReceived(_from, _to, _ids, _amounts, _data);
@@ -700,7 +700,7 @@ contract ERC1155 is IERC165 {
         // check if recipient is contract
         if (_to.isContract()) {
             bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received(msg.sender, _from, _id, _amount, _data);
-            require(retval == ERC1155_RECEIVED_VALUE, "ERC1155#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE");
+            require(retval == ERC1155_RECEIVED_VALUE, "erc1155#_callonerc1155received: INVALID_ON_RECEIVE_MESSAGE");
         }
     }
 
@@ -994,7 +994,7 @@ contract ERC1155MintBurn is ERC1155 {
     function _batchMint(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
     internal
     {
-        require(_ids.length == _amounts.length, "ERC1155MintBurn#batchMint: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "erc1155mintburn#batchmint: INVALID_ARRAYS_LENGTH");
 
         // number of mints to execute
         uint256 nMint = _ids.length;
@@ -1042,7 +1042,7 @@ contract ERC1155MintBurn is ERC1155 {
     function _batchBurn(address _from, uint256[] memory _ids, uint256[] memory _amounts)
     internal
     {
-        require(_ids.length == _amounts.length, "ERC1155MintBurn#batchBurn: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "erc1155mintburn#batchburn: INVALID_ARRAYS_LENGTH");
 
         // number of mints to execute
         uint256 nBurn = _ids.length;
@@ -1169,7 +1169,7 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
     }
 
     function uri(uint256 _id) public view returns (string memory) {
-        require(_exists(_id), "ERC721Tradable#uri: NONEXISTENT_TOKEN");
+        require(_exists(_id), "erc721tradable#uri: NONEXISTENT_TOKEN");
         return Strings.strConcat(baseMetadataURI, Strings.uint2str(_id));
     }
 
