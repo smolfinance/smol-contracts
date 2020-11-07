@@ -466,7 +466,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
     }
 
     function burn(address _account, uint256 value) public onlyCanTransfer {
-        require(_balances[_account] >= value, "Cannot burn more than address has");
+        require(_balances[_account] >= value, "nope, cannot burn more than address has");
         _burn(_account, value);
     }
 
