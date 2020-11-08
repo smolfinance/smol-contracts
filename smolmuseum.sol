@@ -190,7 +190,7 @@ contract CanTransferRole is Context {
 }
 
 interface SmolTingPot {
-    function withdraw(uint256 _pid, uint256 _amount) external;
+    function withdraw(uint256 _pid, uint256 _amount, address _address) external;
 }
 
 contract SmolMuseum is Ownable, CanTransferRole  {
@@ -209,7 +209,7 @@ contract SmolMuseum is Ownable, CanTransferRole  {
     }
 	
 	function setBoosterForUser(address _address, uint256 _pid, uint256 _booster) public onlyOwner {
-	    smolTingPot.withdraw(_pid, 0);
+	    smolTingPot.withdraw(_pid, 0, _address);
         boosterInfo[_pid][_address] = _booster;
     }
     

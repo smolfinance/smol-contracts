@@ -642,7 +642,7 @@ contract SmolTingPot is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
         uint256 blockTime = block.timestamp;
-	uint256 accTing = pool.accTingPerShare;
+	    uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
         accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
 
@@ -652,9 +652,10 @@ contract SmolTingPot is Ownable {
         
         uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
         if (pendingWithBooster > 0) {
-		Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
-        	Ting.mint(msg.sender, pendingWithBooster);	
-		Ting.addClaimed(pendingWithBooster);
+
+        Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
+        Ting.mint(msg.sender, pendingWithBooster);
+        Ting.addClaimed(pendingWithBooster);		    
 	    }
 	    
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
@@ -668,7 +669,7 @@ contract SmolTingPot is Ownable {
         UserInfo storage user = userInfo[_pid][staker];
         require(user.amount >= _amount, "withdraw: not good");
         require(msg.sender == staker || _amount == 0);
-	uint256 accTing = pool.accTingPerShare;
+	    uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = block.timestamp.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
         accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
 
