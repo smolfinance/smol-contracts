@@ -74,7 +74,7 @@ contract Ownable is Context {
      * @dev throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "ownable: caller is not the tingboost owner");
+        require(isOwner(), "caller isnt tingboost owner");
         _;
     }
 
@@ -109,7 +109,7 @@ contract Ownable is Context {
      * @dev transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "ownable: new tingboost owner is the zero address");
+        require(newOwner != address(0), "new boost owner is zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -128,7 +128,7 @@ library Roles {
      * @dev give an account access to this role.
      */
     function add(Role storage role, address account) internal {
-        require(!has(role, account), "roles: account already has role");
+        require(!has(role, account), "roles: account already is role");
         role.bearer[account] = true;
     }
 
@@ -136,7 +136,7 @@ library Roles {
      * @dev remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "roles: account does not have role");
+        require(has(role, account), "roles: account doesnt have role");
         role.bearer[account] = false;
     }
 
@@ -145,7 +145,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "roles: account is the zero address");
+        require(account != address(0), "roles: account is zero address");
         return role.bearer[account];
     }
 }

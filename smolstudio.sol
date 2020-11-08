@@ -104,7 +104,7 @@ contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
+        require(isOwner(), "ownable: caller isnt beeg, guy");
         _;
     }
 
@@ -139,7 +139,7 @@ contract Ownable is Context {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "ownable: new studio owner is the zero address");
+        require(newOwner != address(0), "new studio owner is 0x00 address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -158,7 +158,7 @@ library Roles {
      * @dev Give an account access to this role.
      */
     function add(Role storage role, address account) internal {
-        require(!has(role, account), "roles: account already has requested role");
+        require(!has(role, account), "roles: account already is beeg");
         role.bearer[account] = true;
     }
 
@@ -166,7 +166,7 @@ library Roles {
      * @dev Remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "roles: account does not have needed role");
+        require(has(role, account), "roles: account is not beeg nuff");
         role.bearer[account] = false;
     }
 
@@ -175,7 +175,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "roles: account is the zero address");
+        require(account != address(0), "roles: account is zero address");
         return role.bearer[account];
     }
 }
@@ -193,7 +193,7 @@ contract MinterRole is Context {
     }
 
     modifier onlyMinter() {
-        require(isMinter(_msgSender()), "minterRole: caller does not have the beeg nft minter role");
+        require(isMinter(_msgSender()), "caller is not beeg nft minter");
         _;
     }
 
@@ -237,7 +237,7 @@ contract WhitelistAdminRole is Context {
     }
 
     modifier onlyWhitelistAdmin() {
-        require(isWhitelistAdmin(_msgSender()), "whitelistadminrole: caller does not have the beeg whitelistadmin ting");
+        require(isWhitelistAdmin(_msgSender()), "caller is not beeg ting");
         _;
     }
 
@@ -581,8 +581,8 @@ contract ERC1155 is IERC165 {
     function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount, bytes memory _data)
     public
     {
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "erc1155#safetransferfrom: INVALID_OPERATOR");
-        require(_to != address(0),"erc1155#safetransferfrom: INVALID_RECIPIENT");
+        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "1155#transfer:INVALID_OPERATOR");
+        require(_to != address(0),"1155#transfer:INVALID_RECIPIENT");
         // require(_amount >= balances[_from][_id]) is not necessary since checked with safemath operations
 
         _safeTransferFrom(_from, _to, _id, _amount);
@@ -601,8 +601,8 @@ contract ERC1155 is IERC165 {
     public
     {
         // Requirements
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "erc1155#safebatchtransferfrom: INVALID_OPERATOR");
-        require(_to != address(0), "erc1155#safebatchtransferfrom: INVALID_RECIPIENT");
+        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "1155#batchtransfer: INVALID_OP");
+        require(_to != address(0), "1155#batchxfr:INVALID_RECIPIENT");
 
         _safeBatchTransferFrom(_from, _to, _ids, _amounts);
         _callonERC1155BatchReceived(_from, _to, _ids, _amounts, _data);
@@ -640,7 +640,7 @@ contract ERC1155 is IERC165 {
         // Check if recipient is contract
         if (_to.isContract()) {
             bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received(msg.sender, _from, _id, _amount, _data);
-            require(retval == ERC1155_RECEIVED_VALUE, "erc1155#_callonerc1155received: INVALID_ON_RECEIVE_MESSAGE");
+            require(retval == ERC1155_RECEIVED_VALUE, "callon1155: BAD_ON_RECEIVE_MSG");
         }
     }
 
@@ -654,7 +654,7 @@ contract ERC1155 is IERC165 {
     function _safeBatchTransferFrom(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts)
     internal
     {
-        require(_ids.length == _amounts.length, "erc1155#_safebatchtransferfrom: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "1155#_batchxfer: BAD_ARRAYS_LEN");
 
         // Number of transfer to execute
         uint256 nTransfer = _ids.length;
@@ -679,7 +679,7 @@ contract ERC1155 is IERC165 {
         // Pass data if recipient is contract
         if (_to.isContract()) {
             bytes4 retval = IERC1155TokenReceiver(_to).onERC1155BatchReceived(msg.sender, _from, _ids, _amounts, _data);
-            require(retval == ERC1155_BATCH_RECEIVED_VALUE, "erc1155#_callonerc1155batchreceived: INVALID_ON_RECEIVE_MESSAGE");
+            require(retval == ERC1155_BATCH_RECEIVED_VALUE, "on1155batch: BAD_RECEIVE_MSG");
         }
     }
 
@@ -739,7 +739,7 @@ contract ERC1155 is IERC165 {
     function balanceOfBatch(address[] memory _owners, uint256[] memory _ids)
     public view returns (uint256[] memory)
     {
-        require(_owners.length == _ids.length, "erc1155#balanceofbatch: INVALID_ARRAY_LENGTH");
+        require(_owners.length == _ids.length, "1155#balanceofbatch: BAD_[]_LEN");
 
         // Variables
         uint256[] memory batchBalances = new uint256[](_owners.length);
@@ -840,7 +840,7 @@ contract ERC1155Metadata {
      * @param _URIs    The URIs of the specified _tokenIDs
      */
     function _logURIs(uint256[] memory _tokenIDs, string[] memory _URIs) internal {
-        require(_tokenIDs.length == _URIs.length, "erc1155metadata#_loguris: INVALID_ARRAYS_LENGTH");
+        require(_tokenIDs.length == _URIs.length, "1155metadata#_loguris: BAD_A[]]S_LENGTH");
         for (uint256 i = 0; i < _tokenIDs.length; i++) {
             emit URI(_URIs[i], _tokenIDs[i]);
         }
@@ -934,7 +934,7 @@ contract ERC1155MintBurn is ERC1155 {
     function _batchMint(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
     internal
     {
-        require(_ids.length == _amounts.length, "erc1155mintburn#batchmint: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "1155#batchmint: BAD_[]S_LENGTH");
 
         // Number of mints to execute
         uint256 nMint = _ids.length;
@@ -982,7 +982,7 @@ contract ERC1155MintBurn is ERC1155 {
     function _batchBurn(address _from, uint256[] memory _ids, uint256[] memory _amounts)
     internal
     {
-        require(_ids.length == _amounts.length, "erc1155mintburn#batchburn: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "1155#batchburn:BADD_[]S_LENGTH");
 
         // Number of mints to execute
         uint256 nBurn = _ids.length;
@@ -1109,7 +1109,7 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
     }
 
     function uri(uint256 _id) public view returns (string memory) {
-        require(_exists(_id), "erc721tradable#uri: NONEXISTENT_TOKEN");
+        require(_exists(_id), "erc721#uri: NONEXISTENT_TOKEN");
         return Strings.strConcat(baseMetadataURI, Strings.uint2str(_id));
     }
 
@@ -1153,7 +1153,7 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
         string calldata _uri,
         bytes calldata _data
     ) external onlyWhitelistAdmin returns (uint256 tokenId) {
-        require(_initialSupply <= _maxSupply, "initial supply cannot be more than max supply");
+        require(_initialSupply <= _maxSupply, "initial cant be >an max supply");
         uint256 _id = _getNextTokenID();
         _incrementTokenTypeId();
         creators[_id] = msg.sender;
@@ -1233,8 +1233,8 @@ contract SmolStudio is ERC1155Tradable {
     string private _contractURI;
 
     constructor(address _proxyRegistryAddress) public ERC1155Tradable("smol studio", "SmolStudio", _proxyRegistryAddress) {
-        _setBaseMetadataURI("https://smol.finance/api/smolstudio/");
-        _contractURI = "https://smol.finance/api/tings-erc1155";
+        _setBaseMetadataURI("https://api.smol.finance/studio/");
+        _contractURI = "https://api.smol.finance/studio/tings-erc1155";
     }
 
     function setBaseMetadataURI(string memory newURI) public onlyWhitelistAdmin {
@@ -1258,7 +1258,7 @@ contract SmolStudio is ERC1155Tradable {
     }
 
     function burn(address _account, uint256 _id, uint256 _amount) public onlyMinter {
-        require(balanceOf(_account, _id) >= _amount, "cannot burn more than address has");
+        require(balanceOf(_account, _id) >= _amount, "cant burn more than address has");
         _burn(_account, _id, _amount);
     }
 

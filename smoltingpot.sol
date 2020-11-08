@@ -189,7 +189,7 @@ library Roles {
      * @dev give an account access to this role.
      */
     function add(Role storage role, address account) internal {
-        require(!has(role, account), "roles: account already has role");
+        require(!has(role, account), "roles: account already is role");
         role.bearer[account] = true;
     }
 
@@ -197,7 +197,7 @@ library Roles {
      * @dev remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "roles: account does not have role");
+        require(has(role, account), "roles: account doesnt have role");
         role.bearer[account] = false;
     }
 
@@ -206,7 +206,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "roles: account is the zero address");
+        require(account != address(0), "roles: account is zero address");
         return role.bearer[account];
     }
 }
@@ -224,7 +224,7 @@ contract MinterRole is Context {
     }
 
     modifier onlyMinter() {
-        require(isMinter(_msgSender()), "smol guy does not have beeg role");
+        require(isMinter(_msgSender()), "smol guy doesnt have beeg role");
         _;
     }
 
@@ -466,7 +466,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
     }
 
     function burn(address _account, uint256 value) public onlyCanTransfer {
-        require(_balances[_account] >= value, "nope, cannot burn more than address has");
+        require(_balances[_account] >= value, "cant burn more than address has");
         _burn(_account, value);
     }
 
@@ -478,7 +478,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
      * @param value the amount that will be created.
      */
     function _mint(address account, uint256 value) internal {
-        require(account != address(0), "erc20: mint to the zero address");
+        require(account != address(0), "erc20: mint to zero address");
 
         _totalSupply = _totalSupply.add(value);
         _balances[account] = _balances[account].add(value);
@@ -492,7 +492,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
      * @param value the amount that will be burnt.
      */
     function _burn(address account, uint256 value) internal {
-        require(account != address(0), "erc20: burn from the zero address");
+        require(account != address(0), "erc20: burn from zero address");
 
         _totalSupply = _totalSupply.sub(value);
         _balances[account] = _balances[account].sub(value);
@@ -591,7 +591,7 @@ contract SmolTingPot is Ownable {
 
     // set the amount of TINGs generated per day for each token staked
     function setTingsPerDay(uint256 pid, uint256 amount) public onlyOwner {
-        require(amount >= 0, "hey smol tings per day cannot be negative");
+        require(amount >= 0, "tings per day cant be negative");
         uint256 blockTime = block.timestamp;
         uint256 tingReward = blockTime.sub(poolInfo[pid].lastUpdateTime).mul(poolInfo[pid].tingsPerDay).div(86400);
         poolInfo[pid].accTingPerShare = poolInfo[pid].accTingPerShare.add(tingReward.mul(1e12));
@@ -640,9 +640,7 @@ contract SmolTingPot is Ownable {
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-
-        require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
-
+        require(_amount.add(user.amount) <= pool.maxStake, "cant stake > max stake value");
         uint256 blockTime = block.timestamp;
 	    uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
@@ -652,12 +650,14 @@ contract SmolTingPot is Ownable {
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
         
-        //Get the additional booster applicable for the user and mint the TINGs accordingly
         uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
         if (pendingWithBooster > 0) {
-		    Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
-        	Ting.mint(msg.sender, pendingWithBooster);							
+
+        Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
+        Ting.mint(msg.sender, pendingWithBooster);
+        Ting.addClaimed(pendingWithBooster);		    
 	    }
+	    
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
         emit Deposit(msg.sender, _pid, _amount);
     }
@@ -667,10 +667,8 @@ contract SmolTingPot is Ownable {
         address staker = _staker;
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][staker];
-
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "smol withdrawal: not good");
         require(msg.sender == staker || _amount == 0);
-
 	    uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = block.timestamp.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
         accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
@@ -688,12 +686,12 @@ contract SmolTingPot is Ownable {
 
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
-        
-        //Get the additional booster applicable for the user and mint the TINGs accordingly
+
         if(pendingWithBooster > 0)
         {
             Ting.mint(treasuryAddr, pendingWithBooster.div(40)); 
             Ting.mint(staker, pendingWithBooster);
+	    Ting.addClaimed(pendingWithBooster);
         }
 
         pool.token.transfer(address(staker), _amount);
@@ -715,7 +713,7 @@ contract SmolTingPot is Ownable {
 
     // update dev address by the previous dev.
     function treasury(address _treasuryAddr) public {
-        require(msg.sender == treasuryAddr, "must be called from current treasury address");
+        require(msg.sender == treasuryAddr, "must call from current treasury");
         treasuryAddr = _treasuryAddr;
     }
     

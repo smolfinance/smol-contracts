@@ -73,7 +73,7 @@ contract Ownable is Context {
      * @dev throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "ownable: tingcaller is not the owner");
+        require(isOwner(), "ownable: tingcaller isnt owner");
         _;
     }
 
@@ -108,7 +108,7 @@ contract Ownable is Context {
      * @dev transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "ownable: new tingowner is the zero address");
+        require(newOwner != address(0), "new tingowner is zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -135,7 +135,7 @@ library Roles {
      * @dev remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "roles: account does not have role");
+        require(has(role, account), "roles: account doesnt have role");
         role.bearer[account] = false;
     }
 
@@ -144,7 +144,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "roles: account is the zero address");
+        require(account != address(0), "roles: account is zero address");
         return role.bearer[account];
     }
 }
@@ -162,7 +162,7 @@ contract MinterRole is Context {
     }
 
     modifier onlyMinter() {
-        require(isMinter(_msgSender()), "smol mint: caller does not have rly beeg minter role");
+        require(isMinter(_msgSender()), "smol mint: u no beeg minter");
         _;
     }
 
@@ -299,7 +299,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
     }
 
     function burn(address _account, uint256 value) public onlyCanTransfer {
-        require(_balances[_account] >= value, "ya no cant burn more than address has");
+        require(_balances[_account] >= value, "no cant burn > than address has");
         _burn(_account, value);
     }
 
@@ -311,7 +311,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
      * @param value the amount that will be created.
      */
     function _mint(address account, uint256 value) internal {
-        require(account != address(0), "smolerc20: mint to the zero address");
+        require(account != address(0), "smolerc20: mint to 0 address");
 
         _totalSupply = _totalSupply.add(value);
         _balances[account] = _balances[account].add(value);
@@ -325,7 +325,7 @@ contract SmolTing is Ownable, MinterRole, CanTransferRole {
      * @param value The amount that will be burnt.
      */
     function _burn(address account, uint256 value) internal {
-        require(account != address(0), "smolerc20: burn from the zero address");
+        require(account != address(0), "smolerc20: burn from 0 address");
 
         _totalSupply = _totalSupply.sub(value);
         _balances[account] = _balances[account].sub(value);

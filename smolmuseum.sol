@@ -73,7 +73,7 @@ contract Ownable is Context {
      * @dev throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "ownable: caller is not the owner");
+        require(isOwner(), "ownable: caller is not owner");
         _;
     }
 
@@ -108,7 +108,7 @@ contract Ownable is Context {
      * @dev transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "ownable: new owner is the zero address");
+        require(newOwner != address(0), "woah! new owner is 0x00 address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -127,7 +127,7 @@ library Roles {
      * @dev give an account access to this role.
      */
     function add(Role storage role, address account) internal {
-        require(!has(role, account), "roles: account already has role");
+        require(!has(role, account), "roles: account already beeg boi");
         role.bearer[account] = true;
     }
 
@@ -135,7 +135,7 @@ library Roles {
      * @dev remove an account's access to this role.
      */
     function remove(Role storage role, address account) internal {
-        require(has(role, account), "roles: account does not have role");
+        require(has(role, account), "account not beeg enuff");
         role.bearer[account] = false;
     }
 
@@ -144,7 +144,7 @@ library Roles {
      * @return bool
      */
     function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "roles: account is the zero address");
+        require(account != address(0), "roles: account is 0x00 address");
         return role.bearer[account];
     }
 }
@@ -190,7 +190,7 @@ contract CanTransferRole is Context {
 }
 
 interface SmolTingPot {
-    function withdraw(uint256 _pid, uint256 _amount) external;
+    function withdraw(uint256 _pid, uint256 _amount, address _address) external;
 }
 
 contract SmolMuseum is Ownable, CanTransferRole  {
@@ -209,7 +209,7 @@ contract SmolMuseum is Ownable, CanTransferRole  {
     }
 	
 	function setBoosterForUser(address _address, uint256 _pid, uint256 _booster) public onlyOwner {
-	    smolTingPot.withdraw(_pid, 0);
+	    smolTingPot.withdraw(_pid, 0, _address);
         boosterInfo[_pid][_address] = _booster;
     }
     
