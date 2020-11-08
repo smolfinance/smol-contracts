@@ -593,8 +593,8 @@ contract SmolTingPot is Ownable {
     function setTingsPerDay(uint256 pid, uint256 amount) public onlyOwner {
         require(amount >= 0, "hey smol tings per day cannot be negative");
         uint256 blockTime = block.timestamp;
-        uint256 tingReward = blockTime.sub(poolInfo[pid].lastUpdateTime).mul(poolInfo[pid].tingsPerDay).div(86400);
-        poolInfo[pid].accTingPerShare = poolInfo[pid].accTingPerShare.add(tingReward.mul(1e12));
+        uint256 tingReward = blockTime.sub(poolInfo[pid].lastUpdateTime).mul(poolInfo[pid].tingsPerDay.mul(1e12)).div(86400);
+        poolInfo[pid].accTingPerShare = poolInfo[pid].accTingPerShare.add(tingReward);
         poolInfo[pid].lastUpdateTime = block.timestamp;
         poolInfo[pid].tingsPerDay = amount;
     }
@@ -607,8 +607,8 @@ contract SmolTingPot is Ownable {
         uint256 accTing = pool.accTingPerShare;
         uint256 tokenSupply = pool.token.balanceOf(address(this));
         if (blockTime > pool.lastUpdateTime && tokenSupply != 0) {
-            uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400);
-            accTing = accTing.add(tingReward.mul(1e12));					// reward Clock at t time
+            uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay.mul(1e12)).div(86400);
+            accTing = accTing.add(tingReward);					// reward Clock at t time
         }
         uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
         if (Museum.getBoosterForUser(_user, _pid) > 0) pending = pending.mul(Museum.getBoosterForUser(_user, _pid).add(1));
@@ -643,8 +643,8 @@ contract SmolTingPot is Ownable {
         require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
         uint256 blockTime = block.timestamp;
 	    uint256 accTing = pool.accTingPerShare;
-        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
-        accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
+        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay.mul(1e12)).div(86400); 
+        accTing = accTing.add(tingReward);					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
 
         uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
         user.amount = user.amount.add(_amount);
