@@ -653,7 +653,8 @@ contract SmolTingPot is Ownable {
         uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
         if (pendingWithBooster > 0) {
 		Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
-        	Ting.mint(msg.sender, pendingWithBooster);							
+        	Ting.mint(msg.sender, pendingWithBooster);	
+		Ting.addClaimed(pendingWithBooster);
 	    }
 	    
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
@@ -689,6 +690,7 @@ contract SmolTingPot is Ownable {
         {
             Ting.mint(treasuryAddr, pendingWithBooster.div(40)); 
             Ting.mint(staker, pendingWithBooster);
+	    Ting.addClaimed(pendingWithBooster);
         }
 
         pool.token.transfer(address(staker), _amount);
