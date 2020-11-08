@@ -640,11 +640,9 @@ contract SmolTingPot is Ownable {
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-
         require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
-
         uint256 blockTime = block.timestamp;
-	    uint256 accTing = pool.accTingPerShare;
+	uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
         accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
 
@@ -652,12 +650,12 @@ contract SmolTingPot is Ownable {
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
         
-        //Get the additional booster applicable for the user and mint the TINGs accordingly
         uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
         if (pendingWithBooster > 0) {
-		    Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
+		Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
         	Ting.mint(msg.sender, pendingWithBooster);							
 	    }
+	    
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
         emit Deposit(msg.sender, _pid, _amount);
     }
@@ -667,11 +665,9 @@ contract SmolTingPot is Ownable {
         address staker = _staker;
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][staker];
-
         require(user.amount >= _amount, "withdraw: not good");
         require(msg.sender == staker || _amount == 0);
-
-	    uint256 accTing = pool.accTingPerShare;
+	uint256 accTing = pool.accTingPerShare;
         uint256 tingReward = block.timestamp.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400); 
         accTing = accTing.add(tingReward.mul(1e12));					// HERE : no update of the pool before, so you compute the real amount of accTingPerShare to use it to mint
 
@@ -688,8 +684,7 @@ contract SmolTingPot is Ownable {
 
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
-        
-        //Get the additional booster applicable for the user and mint the TINGs accordingly
+
         if(pendingWithBooster > 0)
         {
             Ting.mint(treasuryAddr, pendingWithBooster.div(40)); 
