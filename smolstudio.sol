@@ -1233,8 +1233,8 @@ contract SmolStudio is ERC1155Tradable {
     string private _contractURI;
 
     constructor(address _proxyRegistryAddress) public ERC1155Tradable("smol studio", "SmolStudio", _proxyRegistryAddress) {
-        _setBaseMetadataURI("https://smol.finance/api/smolstudio/");
-        _contractURI = "https://smol.finance/api/tings-erc1155";
+        _setBaseMetadataURI("https://api.smol.finance/studio/");
+        _contractURI = "https://api.smol.finance/studio/tings-erc1155";
     }
 
     function setBaseMetadataURI(string memory newURI) public onlyWhitelistAdmin {
