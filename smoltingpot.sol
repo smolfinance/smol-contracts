@@ -517,7 +517,7 @@ contract SmolTingPot is Ownable {
     // info of each user.
     struct UserInfo {
         uint256 amount; // how many tokens the user has provided.
-        uint256 rewardDebt; // block of last withdraw/deposit - can see it as user's lastUpdate
+        uint256 rewardDebt; // Reward debt. See explanation below.
         //
         // we do some fancy math here. basically, any point in time, the amount of TINGs
         // entitled to a user but is pending to be distributed is:
@@ -610,11 +610,10 @@ contract SmolTingPot is Ownable {
         UserInfo storage user = userInfo[_pid][_user];
         uint256 blockTime = block.timestamp;
         uint256 accTing = pool.accTingPerShare;
-        uint256 tokenSupply = pool.token.balanceOf(address(this));
 
-        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(tokenSupply).mul(pool.tingsPerDay).div(86400);
-        accTing = accTing.add(tingReward.mul(1e12).div(tokenSupply));                    // reward Clock at t time
-
+        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400);
+        accTing = accTing.add(tingReward.mul(1e12));                    
+    
         uint256 pending = user.amount.mul(accTing).div(1e12).sub(user.rewardDebt);
         return [pending, accTing];
     }
