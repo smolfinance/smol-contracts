@@ -603,7 +603,7 @@ contract SmolTingPot is Ownable {
 
         pool.accTingPerShare = pool.accTingPerShare.add(tingReward.mul(1e12).div(tokenSupply));
         pool.lastUpdateTime = block.timestamp;
-        poolInfo[pid].tingsPerDay = amount;
+        pool.tingsPerDay = amount;
     }
 
     function _pendingTing(uint256 _pid, address _user) internal view returns (uint256[2] memory) {
