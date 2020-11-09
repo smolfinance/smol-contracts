@@ -598,10 +598,9 @@ contract SmolTingPot is Ownable {
         require(amount >= 0, "hey smol tings per day cannot be negative");
         PoolInfo storage pool = poolInfo[pid];
         uint256 blockTime = block.timestamp;
-        uint256 tokenSupply = pool.token.balanceOf(address(this));
-        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(tokenSupply.mul(pool.tingsPerDay).div(86400));
+        uint256 tingReward = blockTime.sub(pool.lastUpdateTime).mul(pool.tingsPerDay).div(86400);
 
-        pool.accTingPerShare = pool.accTingPerShare.add(tingReward.mul(1e12).div(tokenSupply));
+        pool.accTingPerShare = pool.accTingPerShare.add(tingReward.mul(1e12));
         pool.lastUpdateTime = block.timestamp;
         pool.tingsPerDay = amount;
     }
