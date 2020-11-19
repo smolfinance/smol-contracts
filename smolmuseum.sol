@@ -308,7 +308,7 @@ contract SmolMuseum is Ownable {
         uint256 tingPerDayPerCard;
         uint256 bonusTingMultiplier;     	// 100% bonus = 1e5
         bool isBooster;                   	// False if the card set doesn't give pool boost at smolTingPot
-        uint256[] poolBoosts;            	// Applicable if isBooster is true.Eg: If this NFT set gives Pool_0 a 20% bonus and no bonus for pool_1, , set it as [0.2,0]
+        uint256[] poolBoosts;            	// 100% bonus = 1e5. Applicable if isBooster is true.Eg: [0,20000] = 0% boost for pool 1, 20% boost for pool 2
         bool isRemoved;
     }
 
@@ -470,7 +470,7 @@ contract SmolMuseum is Ownable {
      * @dev Returns the applicable booster of a user, for a pool, from a staked NFT set.
      */
     function getBoosterForUser(address _addr, uint256 _pid) public view returns (uint256) {
-        return userPoolBoosts[_addr][_pid];
+        return userPoolBoosts[_addr][_pid].div(1e5);
     }
 
 	/**
