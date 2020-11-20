@@ -14,7 +14,6 @@ library SafeMath {
 }
 
 /*
-
  * @dev provides information about the current execution context, including the
  * sender of the transaction and its data. while these are generally available
  * via msg.sender and msg.data, they should not be accessed in such a direct
@@ -74,7 +73,7 @@ contract Ownable is Context {
      * @dev throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "ownable: caller is not the tingboost owner");
+        require(isOwner(), "ownable: caller is not the owner");
         _;
     }
 
@@ -109,7 +108,7 @@ contract Ownable is Context {
      * @dev transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "ownable: new tingboost owner is the zero address");
+        require(newOwner != address(0), "ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -193,28 +192,17 @@ contract CanTransferRole is Context {
 
 contract TingBooster is Ownable, CanTransferRole  {
 
-	//Mapping data of Museum-like booster of a user in a pool
-	mapping(uint256 => mapping(address => uint256)) public boosterInfo;
-	//Mapping data of Spindle-like multiplier for a user (no pool needed
-    mapping(address => uint256) public userSpindleMultiplier;
+
+	//Mapping data of booster of a user in a pool. 100% booster = 1e5
+    mapping(address => uint256) public boosterInfo;
+	
     
-    // That function is for fake Museum 
-    function getBoosterForUser(address _address, uint256 _pid)  public view returns (uint256) {
-        return boosterInfo[_pid][_address];
-    }
-    
-    // That function is for fake Spindle 
     function getMultiplierOfAddress(address _address)  public view returns (uint256) {
-        return userSpindleMultiplier[_address];
+        return boosterInfo[_address];
     }
 	
-
-	function setBoosterForUser(address _address, uint256 _pid, uint256 _booster) public onlyOwner {
-        boosterInfo[_pid][_address] = _booster;
-    }
-    
-    function setMultiplierOfAddress(address _address, uint256 _multiplier) public onlyOwner {
-        userSpindleMultiplier[_address] = _multiplier;
+	function setMultiplierOfAddress(address _address, uint256 _booster) public onlyOwner {
+        boosterInfo[_address] = _booster;
     }
     
 }
