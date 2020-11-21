@@ -654,7 +654,7 @@ contract SmolTingPot is Ownable {
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
 
-        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1));
+        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1e5)).div(1e5);
         if (pendingWithBooster > 0) {
             Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
             Ting.mint(msg.sender, pendingWithBooster);
@@ -687,7 +687,7 @@ contract SmolTingPot is Ownable {
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
 
-        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(staker, _pid).add(1));
+        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(staker, _pid).add(1e5)).div(1e5);
         if(pendingWithBooster > 0)
         {
             Ting.mint(treasuryAddr, pendingWithBooster.div(40));
