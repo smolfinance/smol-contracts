@@ -319,12 +319,18 @@ contract SmolMuseum is Ownable {
     address public treasuryAddr;
 
     uint256[] public cardSetList;
+	//Highest CardId added to the museum
     uint256 public highestCardId;
+	//SetId mapped to all card IDs in the set.
     mapping (uint256 => CardSet) public cardSets;
+	//CardId to SetId mapping
     mapping (uint256 => uint256) public cardToSetMap;
 
+	//Status of user's cards staked mapped to the cardID
     mapping (address => mapping(uint256 => bool)) public userCards;
+	//Status of the User's eligible pools boost based on a booster card staked.
     mapping (address => mapping(uint256 => uint256)) public userPoolBoosts;
+	//Last update time for a user's TING rewards calculation
     mapping (address => uint256) public userLastUpdate;
 
     event Stake(address indexed user, uint256[] cardIds);
@@ -357,7 +363,7 @@ contract SmolMuseum is Ownable {
      */
     function getCardsStakedOfAddress(address _user) public view returns(bool[] memory) {
         bool[] memory cardsStaked = new bool[](highestCardId + 1);
-        for (uint256 i = 0; i < highestCardId + 1; ++i) {
+        for (uint256 i = 0; i < highestCardId + 1; ++i) {			
             cardsStaked[i] = userCards[_user][i];
         }
         return cardsStaked;
@@ -449,9 +455,10 @@ contract SmolMuseum is Ownable {
             }
             totalTingPerDay = totalTingPerDay.add(setTingPerDay);
         }
+
         if (_includeTingBooster) {
-            uint256 toAdd = totalTingPerDay.mul(tingBooster.getMultiplierOfAddress(_user)).div(1e5);
-            totalTingPerDay = totalTingPerDay.add(toAdd);
+			uint256 boostMult = tingBooster.getMultiplierOfAddress(_user).add(1e5);
+            totalTingPerDay = totalTingPerDay.mul(boostMult).div(1e5);
         }
         uint256 lastUpdate = userLastUpdate[_user];
         uint256 blockTime = block.timestamp;
@@ -463,7 +470,8 @@ contract SmolMuseum is Ownable {
      */
     function totalPendingTingOfAddressFromBooster(address _user) external view returns (uint256) {
         uint256 totalPending = totalPendingTingOfAddress(_user, false);
-        return totalPending.mul(tingBooster.getMultiplierOfAddress(_user)).div(1e5);
+		uint256 userBoost = tingBooster.getMultiplierOfAddress(_user).add(1e5);
+        return totalPending.mul(userBoost).div(1e5);
     }
     
     /**
@@ -688,6 +696,11 @@ contract SmolMuseum is Ownable {
      */
     function updateTingBoosterAddress(TingBooster _tingBoosterAddress) public onlyOwner{
         tingBooster = _tingBoosterAddress;
+    }
+	
+	// update pot address if the pot logic changed.
+    function updateSmolTingPotAddress(SmolTingPot _smolTingPotAddress) public onlyOwner{
+        smolTingPot = _smolTingPotAddress;
     }
     
 	/**

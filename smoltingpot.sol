@@ -617,8 +617,13 @@ contract SmolTingPot is Ownable {
     // view function to see pending TINGs on frontend.
     function pendingTing(uint256 _pid, address _user) public view returns (uint256) {
         uint256 pending = _pendingTing(_pid, _user)[0];
-        if (Museum.getBoosterForUser(_user, _pid) > 0) pending = pending.mul(Museum.getBoosterForUser(_user, _pid).add(1e5));
-        return pending.div(1e5);
+		uint256 booster = Museum.getBoosterForUser(_user, _pid);		
+        if ( booster > 0) 
+		{
+			pending = pending.mul(booster.add(1e5));
+			pending = pending.div(1e5);
+		}
+        return pending;
     }
 
 
@@ -649,18 +654,17 @@ contract SmolTingPot is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(_amount.add(user.amount) <= pool.maxStake, "cannot stake beyond max stake value");
 
-        uint256 pending = _pendingTing(_pid, msg.sender)[0];
+        uint256 pending = pendingTing(_pid, msg.sender);
         uint256 accTing = _pendingTing(_pid, msg.sender)[1];
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
-
-        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(msg.sender, _pid).add(1e5)).div(1e5);
-        if (pendingWithBooster > 0) {
-            Ting.mint(treasuryAddr, pendingWithBooster.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
-            Ting.mint(msg.sender, pendingWithBooster);
-            Ting.addClaimed(pendingWithBooster);
-        }
-
+		
+		if(pending > 0)
+		{
+			Ting.mint(treasuryAddr, pending.div(40)); // 2.5% TING for the treasury (usable to purchase NFTs)
+			Ting.mint(msg.sender, pending);
+			Ting.addClaimed(pending);
+		}
         pool.token.transferFrom(address(msg.sender), address(this), _amount);
         emit Deposit(msg.sender, _pid, _amount);
     }
@@ -673,9 +677,6 @@ contract SmolTingPot is Ownable {
         require(user.amount >= _amount, "withdraw: not good");
         require(msg.sender == staker || _amount == 0);
 
-        uint256 pending = _pendingTing(_pid, staker)[0];
-        uint256 accTing = _pendingTing(_pid, staker)[1];
-
         // in case the maxstake has been lowered and address is above maxstake, we force it to withdraw what is above current maxstake
         // user can delay his/her withdraw/harvest to take advantage of a reducing of maxstake,
         // if he/she entered the pool at maxstake before the maxstake reducing occured
@@ -683,17 +684,16 @@ contract SmolTingPot is Ownable {
         if (leftAfterWithdraw > pool.maxStake) {
             _amount = _amount.add(leftAfterWithdraw - pool.maxStake);
         }
-
+	
+		uint256 pending = pendingTing(_pid, staker);	
+        uint256 accTing = _pendingTing(_pid, staker)[1];
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(accTing).div(1e12);
-
-        uint256 pendingWithBooster = pending.mul(Museum.getBoosterForUser(staker, _pid).add(1e5)).div(1e5);
-        if(pendingWithBooster > 0)
-        {
-            Ting.mint(treasuryAddr, pendingWithBooster.div(40));
-            Ting.mint(staker, pendingWithBooster);
-            Ting.addClaimed(pendingWithBooster);
-        }
+		if(pending > 0) {
+			Ting.mint(treasuryAddr, pending.div(40));
+			Ting.mint(staker, pending);
+			Ting.addClaimed(pending);
+		}
 
         pool.token.transfer(address(staker), _amount);
         emit Withdraw(staker, _pid, _amount);
