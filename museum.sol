@@ -375,6 +375,13 @@ contract SmolMuseum is Ownable {
     function getCardIdListOfSet(uint256 _setId) external view returns(uint256[] memory) {
         return cardSets[_setId].cardIds;
     }
+    
+        /**
+     * @dev Returns the list of booster value for each pool associated with a card Id
+     */
+    function getBoostersOfCard(uint256 _cardId) external view returns(uint256[] memory) {
+        return cardSets[cardToSetMap[_cardId]].poolBoosts;
+    }
 	
 	/**
      * @dev Indexed  boolean of each setId for which a user has a full set or not.
