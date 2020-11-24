@@ -646,6 +646,7 @@ contract SmolMuseum is Ownable {
         for (uint256 i = 0; i < length; ++i) {
             uint256 cardId = _cardIds[i];
             require(userCards[msg.sender][cardId] == true, "Card not staked");
+            userCards[msg.sender][cardId] = false;
             if (cardSets[cardToSetMap[cardId]].tingPerDayPerCard > 0) onlyBoosters = false;
             if (cardSets[cardToSetMap[cardId]].isBooster == true) onlyNoBoosters = false;
         }
