@@ -262,6 +262,8 @@ library SafeMath {
      */
 interface SmolTingPot {
     function withdraw(uint256 _pid, uint256 _amount, address _staker) external;
+    function poolLength() external view returns (uint256);
+    function pendingTing(uint256 _pid, address _user) external view returns (uint256);
 }
 
 	/**
@@ -309,6 +311,7 @@ contract SmolMuseum is Ownable {
         uint256 bonusTingMultiplier;     	// 100% bonus = 1e5
         bool isBooster;                   	// False if the card set doesn't give pool boost at smolTingPot
         uint256[] poolBoosts;            	// 100% bonus = 1e5. Applicable if isBooster is true.Eg: [0,20000] = 0% boost for pool 1, 20% boost for pool 2
+        uint256 bonusFullSetBoost;          // 100% bonus = 1e5. Gives an additional boost if you stake all boosters of that set.
         bool isRemoved;
     }
 
@@ -325,11 +328,8 @@ contract SmolMuseum is Ownable {
     mapping (uint256 => CardSet) public cardSets;
 	//CardId to SetId mapping
     mapping (uint256 => uint256) public cardToSetMap;
-
 	//Status of user's cards staked mapped to the cardID
     mapping (address => mapping(uint256 => bool)) public userCards;
-	//Status of the User's eligible pools boost based on a booster card staked.
-    mapping (address => mapping(uint256 => uint256)) public userPoolBoosts;
 	//Last update time for a user's TING rewards calculation
     mapping (address => uint256) public userLastUpdate;
 
@@ -374,6 +374,13 @@ contract SmolMuseum is Ownable {
      */
     function getCardIdListOfSet(uint256 _setId) external view returns(uint256[] memory) {
         return cardSets[_setId].cardIds;
+    }
+    
+    /**
+     * @dev Returns the boosters associated with a card Id per pool
+     */
+    function getBoostersOfCard(uint256 _cardId) external view returns(uint256[] memory) {
+        return cardSets[cardToSetMap[_cardId]].poolBoosts;
     }
 	
 	/**
@@ -477,8 +484,31 @@ contract SmolMuseum is Ownable {
     /**
      * @dev Returns the applicable booster of a user, for a pool, from a staked NFT set.
      */
-    function getBoosterForUser(address _addr, uint256 _pid) public view returns (uint256) {
-        return userPoolBoosts[_addr][_pid];
+    function getBoosterForUser(address _user, uint256 _pid) public view returns (uint256) {
+        uint256 totalBooster = 0;
+        uint256 length = cardSetList.length;
+        for (uint256 i = 0; i < length; ++i) {
+            uint256 setId = cardSetList[i];
+            CardSet storage set = cardSets[setId];
+            if (set.isBooster == false) continue;
+            if (set.poolBoosts.length < _pid.add(1)) continue;
+            if (set.poolBoosts[_pid] == 0) continue;
+            uint256 cardLength = set.cardIds.length;
+            bool isFullSet = true;
+            uint256 setBooster = 0;
+            for (uint256 j = 0; j < cardLength; ++j) {
+                if (userCards[_user][set.cardIds[j]] == false) {
+                    isFullSet = false;
+                    continue;
+                }
+                setBooster = setBooster.add(set.poolBoosts[_pid]);
+            }
+            if (isFullSet) {
+                setBooster = setBooster.add(set.bonusFullSetBoost);
+            }
+            totalBooster = totalBooster.add(setBooster);
+        }
+        return totalBooster;
     }
 
 	/**
@@ -493,7 +523,7 @@ contract SmolMuseum is Ownable {
 	/**
      * @dev Adds a card set with the input param configs. Removes an existing set if the id exists.
      */
-    function addCardSet(uint256 _setId, uint256[] memory _cardIds, uint256 _bonusTingMultiplier, uint256 _tingPerDayPerCard, uint256[] memory _poolBoosts, bool _isBooster) public onlyOwner {
+    function addCardSet(uint256 _setId, uint256[] memory _cardIds, uint256 _bonusTingMultiplier, uint256 _tingPerDayPerCard, uint256[] memory _poolBoosts, uint256 _bonusFullSetBoost, bool _isBooster) public onlyOwner {
         removeCardSet(_setId);
         uint256 length = _cardIds.length;
         for (uint256 i = 0; i < length; ++i) {
@@ -515,6 +545,7 @@ contract SmolMuseum is Ownable {
         tingPerDayPerCard: _tingPerDayPerCard,
         isBooster: _isBooster,
         poolBoosts: _poolBoosts,
+        bonusFullSetBoost: _bonusFullSetBoost,
         isRemoved: false
         });
     }
@@ -574,36 +605,39 @@ contract SmolMuseum is Ownable {
      * @dev Stakes the cards on providing the card IDs. 
      */
     function stake(uint256[] memory _cardIds) public {
-        require(_cardIds.length > 0, "you can't stake nothing lmao");
-        harvest();
-        // Check no card will end up above max stake
+        require(_cardIds.length > 0, "you need to stake something");
+
+        // Check no card will end up above max stake and if it is needed to update the user NFT pool
         uint256 length = _cardIds.length;
+        bool onlyBoosters = true;
+        bool onlyNoBoosters = true;
         for (uint256 i = 0; i < length; ++i) {
             uint256 cardId = _cardIds[i];
-            require(userCards[msg.sender][cardId] == false, "item already staked, no more pliz");
-            require(cardToSetMap[cardId] != 0, "don't like this anymore");
+            require(userCards[msg.sender][cardId] == false, "item already staked");
+            require(cardToSetMap[cardId] != 0, "you can't stake that");
+            if (cardSets[cardToSetMap[cardId]].tingPerDayPerCard > 0) onlyBoosters = false;
+            if (cardSets[cardToSetMap[cardId]].isBooster == true) onlyNoBoosters = false;
         }
+                // Harvest NFT pool if the Ting/day will be modified
+        if (onlyBoosters == false) harvest();
         
-        for (uint256 i = 0; i < length; ++i) {                                                                  
-            uint256 cardId = _cardIds[i];
-			 // Update the multiplier if card is a Booster set.
-            if (cardSets[cardToSetMap[cardId]].isBooster) {                                                    
-                uint256 boostLength = cardSets[cardToSetMap[cardId]].poolBoosts.length;
-                uint256[] memory currentBoosts = new uint256[](boostLength); 
-				// Check the boost for each pool. 
-                for (uint256 j = 0; j < boostLength; ++j) {                                                     
-                    currentBoosts[j] = userPoolBoosts[msg.sender][j];
-                    uint256 newBoost = cardSets[cardToSetMap[cardId]].poolBoosts[j];
-					// Boosters for a pool can't stack
-                    require(currentBoosts[j] == 0 || newBoost == 0, "can't stake two amplifiers for the same pool");    
-                    if (newBoost > currentBoosts[j]) {
-                        address staker = msg.sender;
-                        smolTingPot.withdraw(j, 0, staker);                                                            
-                        userPoolBoosts[msg.sender][j] = newBoost;                                               
-                    }                                             
+            	// Harvest each pool where booster value will be modified 
+        if (onlyNoBoosters == false) {
+            for (uint256 i = 0; i < length; ++i) {                                                                  
+                uint256 cardId = _cardIds[i];
+                if (cardSets[cardToSetMap[cardId]].isBooster) {
+                    CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
+                    uint256 boostLength = cardSet.poolBoosts.length;
+                    for (uint256 j = 0; j < boostLength; ++j) {                                                     
+                        if (cardSet.poolBoosts[j] > 0 && smolTingPot.pendingTing(j, msg.sender) > 0) {
+                            address staker = msg.sender;
+                            smolTingPot.withdraw(j, 0, staker);   
+                        }
+                    }
                 }
             }
         }
+        
         //Stake 1 unit of each cardId
         uint256[] memory amounts = new uint256[](_cardIds.length);
         for (uint256 i = 0; i < _cardIds.length; ++i) {
@@ -622,27 +656,35 @@ contract SmolMuseum is Ownable {
      * @dev Unstakes the cards on providing the card IDs. 
      */
     function unstake(uint256[] memory _cardIds) public {
-        require(_cardIds.length > 0, "input at least 1 card id");
-        harvest();
+ 
+         require(_cardIds.length > 0, "input at least 1 card id");
+
+        // Check if all cards are staked and if it is needed to update the user NFT pool
         uint256 length = _cardIds.length;
+        bool onlyBoosters = true;
+        bool onlyNoBoosters = true;
         for (uint256 i = 0; i < length; ++i) {
             uint256 cardId = _cardIds[i];
             require(userCards[msg.sender][cardId] == true, "Card not staked");
             userCards[msg.sender][cardId] = false;
+            if (cardSets[cardToSetMap[cardId]].tingPerDayPerCard > 0) onlyBoosters = false;
+            if (cardSets[cardToSetMap[cardId]].isBooster == true) onlyNoBoosters = false;
         }
+        
+        if (onlyBoosters == false) harvest();
 
-        for (uint256 i = 0; i < length; ++i) {                                                                  
-            uint256 cardId = _cardIds[i];
-			// Update multiplier only if card is a Booster set.
-            if (cardSets[cardToSetMap[cardId]].isBooster) {                                                     
-                uint256 boostLength = cardSets[cardToSetMap[cardId]].poolBoosts.length;
-				// Withdraw each pool with a booster enabled at smolTingPot
-                for (uint256 j = 0; j < boostLength; ++j) {                                                     
-                    uint256 cardBoost = cardSets[cardToSetMap[cardId]].poolBoosts[j];
-                    if (cardBoost > 0) {
-                        address staker = msg.sender;
-                        smolTingPot.withdraw(j, 0, staker);                                                              
-                        userPoolBoosts[msg.sender][j] = 0;                                                                    
+    				// Harvest each pool where booster value will be modified  
+        if (onlyNoBoosters == false) {
+            for (uint256 i = 0; i < length; ++i) {                                                                  
+                uint256 cardId = _cardIds[i];
+                if (cardSets[cardToSetMap[cardId]].isBooster) {
+                    CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
+                    uint256 boostLength = cardSet.poolBoosts.length;
+                    for (uint256 j = 0; j < boostLength; ++j) {                                                     
+                        if (cardSet.poolBoosts[j] > 0 && smolTingPot.pendingTing(j, msg.sender) > 0) {
+                            address staker = msg.sender;
+                            smolTingPot.withdraw(j, 0, staker);   
+                        }
                     }
                 }
             }
@@ -658,7 +700,7 @@ contract SmolMuseum is Ownable {
     }
 
 	/**
-     * @dev Emergency unstake the cards on providing the card IDs, forfeiting the TING rewards.
+     * @dev Emergency unstake the cards on providing the card IDs, forfeiting the TING rewards in both Museum and SmolTingPot.
      */
     function emergencyUnstake(uint256[] memory _cardIds) public {
         userLastUpdate[msg.sender] = block.timestamp;
@@ -667,20 +709,6 @@ contract SmolMuseum is Ownable {
             uint256 cardId = _cardIds[i];
             require(userCards[msg.sender][cardId] == true, "Card not staked");
             userCards[msg.sender][cardId] = false;
-        }
-
-        for (uint256 i = 0; i < length; ++i) {                                                                  
-            uint256 cardId = _cardIds[i];
-            if (cardSets[cardToSetMap[cardId]].isBooster) {                                                     
-                uint256 boostLength = cardSets[cardToSetMap[cardId]].poolBoosts.length;
-                for (uint256 j = 0; j < boostLength; ++j) {                                                     
-                    uint256 cardBoost = cardSets[cardToSetMap[cardId]].poolBoosts[j];
-                    if (cardBoost > 0 ) {
-                        userPoolBoosts[msg.sender][j] = 0;                                                      
-      
-                    }
-                }
-            }
         }
 
         //UnStake 1 unit of each cardId
