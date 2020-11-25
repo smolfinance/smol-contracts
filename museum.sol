@@ -627,7 +627,7 @@ contract SmolMuseum is Ownable {
             for (uint256 i = 0; i < length; ++i) {                                                                  
                 uint256 cardId = _cardIds[i];
                 if (cardSets[cardToSetMap[cardId]].isBooster) {
-                    CardSet memory cardSet = cardSets[cardToSetMap[cardId]];
+                    CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
                     uint256 boostLength = cardSet.poolBoosts.length;
                     for (uint256 j = 0; j < boostLength; ++j) {                                                     
                         if (cardSet.poolBoosts[j] > 0 && poolHarvested[j] == false) {
@@ -681,7 +681,7 @@ contract SmolMuseum is Ownable {
             for (uint256 i = 0; i < length; ++i) {                                                                  
                 uint256 cardId = _cardIds[i];
                 if (cardSets[cardToSetMap[cardId]].isBooster) {
-                    CardSet memory cardSet = cardSets[cardToSetMap[cardId]];
+                    CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
                     uint256 boostLength = cardSet.poolBoosts.length;
                     for (uint256 j = 0; j < boostLength; ++j) {                                                     
                         if (cardSet.poolBoosts[j] > 0 && poolHarvested[j] == false) {
