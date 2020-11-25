@@ -491,7 +491,7 @@ contract SmolMuseum is Ownable {
             CardSet storage set = cardSets[setId];
             if (set.isRemoved) continue;
             if (set.isBooster == false) continue;
-            if (set.poolBoosts.length < _pid) continue;
+            if (set.poolBoosts.length < _pid.add(1)) continue;
             if (set.poolBoosts[_pid] == 0) continue;
             uint256 cardLength = set.cardIds.length;
             bool isFullSet = true;
