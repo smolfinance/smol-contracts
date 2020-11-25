@@ -29,6 +29,27 @@ library Math {
     }
 }
 
+library SafeMath {
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+}
+
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -137,6 +158,7 @@ interface SmolTing {
 }
 
 interface SmolStudio {
+    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _amounts, bytes calldata _data) external;
     function mint(address _to, uint256 _id, uint256 _quantity, bytes calldata _data) external;
     function totalSupply(uint256 _id) external view returns (uint256);
     function maxSupply(uint256 _id) external view returns (uint256);
@@ -144,11 +166,12 @@ interface SmolStudio {
 
 
 contract SmolMart is Ownable {
+    using SafeMath for uint256;
     SmolStudio public smolStudio;
     SmolTing public Ting;
     mapping(uint256 => uint256) public cardCosts;
 
-    event CardAdded(uint256 card, uint256 points);
+    event CardAdded(uint256[] cardIds, uint256[] points);
     event Redeemed(address indexed user, uint256 amount);
 
     constructor(SmolStudio _SmolStudioAddress, SmolTing _tingAddress) public {
@@ -156,18 +179,38 @@ contract SmolMart is Ownable {
         Ting = _tingAddress;
     }
 
-    function addCard(uint256 cardId, uint256 amount) public onlyOwner {
-        cardCosts[cardId] = amount;
-        emit CardAdded(cardId, amount);
+    function addCard(uint256[] memory _cardIds, uint256[] memory _amounts) public onlyOwner {
+        require(_cardIds.length == _amounts.length, "_cardIds and _amounts have different length");
+        for (uint256 i = 0; i < _cardIds.length; ++i) {
+            cardCosts[_cardIds[i]] = _amounts[i];
+        }
+        emit CardAdded(_cardIds, _amounts);
     }
 
-    function redeem(uint256 card) public {
-        require(cardCosts[card] != 0, "card not found");
-        require(Ting.balanceOf(msg.sender) >= cardCosts[card], "not enough TINGs to redeem for a ting");
-        require(smolStudio.totalSupply(card) < smolStudio.maxSupply(card), "max cards minted");
+        // Mint 1 card directly to the user wallet from Studio 
+    function redeem(uint256 _card) public {
+        require(cardCosts[_card] != 0, "card not found");
+        require(Ting.balanceOf(msg.sender) >= cardCosts[_card], "not enough TINGs to redeem for a ting");
+        require(smolStudio.totalSupply(_card) < smolStudio.maxSupply(_card), "max cards minted");
 
-        Ting.burn(msg.sender, cardCosts[card]);
-        smolStudio.mint(msg.sender, card, 1, "");
-        emit Redeemed(msg.sender, cardCosts[card]);
+        Ting.burn(msg.sender, cardCosts[_card]);
+        smolStudio.mint(msg.sender, _card, 1, "");
+        emit Redeemed(msg.sender, cardCosts[_card]);
+    }
+    
+        // Transfer multiple cards from Mart to the user wallet (need the cards to be minted to Mart first)
+    function redeemMultiple(uint256[] memory _cardIds, uint256[] memory _amounts) public {
+        uint256 totalCost = 0;
+        for (uint256 i = 0; i < _cardIds.length; ++i) {
+            require(cardCosts[_cardIds[i]] != 0, "card not found");
+            require(smolStudio.totalSupply(_cardIds[i]).add(_amounts[i]) <= smolStudio.maxSupply(_cardIds[i]), "max cards minted");
+            uint256 toAdd = cardCosts[_cardIds[i]].mul(_amounts[i]);
+            totalCost = totalCost.add(toAdd);
+        }
+        require(Ting.balanceOf(msg.sender) >= totalCost, "not enough TINGs to redeem tings");
+
+        Ting.burn(msg.sender, totalCost);
+        smolStudio.safeBatchTransferFrom(address(this), msg.sender, _cardIds, _amounts, "");
+        emit Redeemed(msg.sender, totalCost);
     }
 }
