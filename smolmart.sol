@@ -213,4 +213,19 @@ contract SmolMart is Ownable {
         smolStudio.safeBatchTransferFrom(address(this), msg.sender, _cardIds, _amounts, "");
         emit Redeemed(msg.sender, totalCost);
     }
+
+
+
+    function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _amount, bytes calldata _data) external returns(bytes4) {
+        return 0xf23a6e61;
+    }
+    
+    function onERC1155BatchReceived(address _operator, address _from, uint256[] calldata _ids, uint256[] calldata _amounts, bytes calldata _data) external returns(bytes4) {
+        return 0xbc197c81;
+    }
+
+    function supportsInterface(bytes4 interfaceID) external view returns (bool) {
+        return  interfaceID == 0x01ffc9a7 ||    // ERC-165 support (i.e. `bytes4(keccak256('supportsInterface(bytes4)'))`).
+        interfaceID == 0x4e2312e0;      // ERC-1155 `ERC1155TokenReceiver` support (i.e. `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)")) ^ bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`).
+    }
 }
