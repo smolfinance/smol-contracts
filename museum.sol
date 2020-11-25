@@ -263,6 +263,7 @@ library SafeMath {
 interface SmolTingPot {
     function withdraw(uint256 _pid, uint256 _amount, address _staker) external;
     function poolLength() external view returns (uint256);
+    function pendingTing(uint256 _pid, address _user) external view returns (uint256);
 }
 
 	/**
@@ -489,7 +490,6 @@ contract SmolMuseum is Ownable {
         for (uint256 i = 0; i < length; ++i) {
             uint256 setId = cardSetList[i];
             CardSet storage set = cardSets[setId];
-            if (set.isRemoved) continue;
             if (set.isBooster == false) continue;
             if (set.poolBoosts.length < _pid.add(1)) continue;
             if (set.poolBoosts[_pid] == 0) continue;
@@ -623,17 +623,15 @@ contract SmolMuseum is Ownable {
         
             	// Harvest each pool where booster value will be modified 
         if (onlyNoBoosters == false) {
-            bool[] memory poolHarvested = new bool[](smolTingPot.poolLength());
             for (uint256 i = 0; i < length; ++i) {                                                                  
                 uint256 cardId = _cardIds[i];
                 if (cardSets[cardToSetMap[cardId]].isBooster) {
                     CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
                     uint256 boostLength = cardSet.poolBoosts.length;
                     for (uint256 j = 0; j < boostLength; ++j) {                                                     
-                        if (cardSet.poolBoosts[j] > 0 && poolHarvested[j] == false) {
+                        if (cardSet.poolBoosts[j] > 0 && smolTingPot.pendingTing(j, msg.sender) > 0) {
                             address staker = msg.sender;
                             smolTingPot.withdraw(j, 0, staker);   
-                            poolHarvested[j] = true;
                         }
                     }
                 }
@@ -677,17 +675,15 @@ contract SmolMuseum is Ownable {
 
     				// Harvest each pool where booster value will be modified  
         if (onlyNoBoosters == false) {
-            bool[] memory poolHarvested = new bool[](smolTingPot.poolLength());
             for (uint256 i = 0; i < length; ++i) {                                                                  
                 uint256 cardId = _cardIds[i];
                 if (cardSets[cardToSetMap[cardId]].isBooster) {
                     CardSet storage cardSet = cardSets[cardToSetMap[cardId]];
                     uint256 boostLength = cardSet.poolBoosts.length;
                     for (uint256 j = 0; j < boostLength; ++j) {                                                     
-                        if (cardSet.poolBoosts[j] > 0 && poolHarvested[j] == false) {
+                        if (cardSet.poolBoosts[j] > 0 && smolTingPot.pendingTing(j, msg.sender) > 0) {
                             address staker = msg.sender;
                             smolTingPot.withdraw(j, 0, staker);   
-                            poolHarvested[j] = true;
                         }
                     }
                 }
