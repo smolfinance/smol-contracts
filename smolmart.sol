@@ -198,8 +198,19 @@ contract SmolMart is Ownable {
         emit Redeemed(msg.sender, cardCosts[_card]);
     }
     
+            // Mint 1 card directly to the user wallet from Studio 
+    function redeemMultiple(uint256 _card, uint256 _amount) public {
+        require(cardCosts[_card] != 0, "card not found");
+        require(Ting.balanceOf(msg.sender) >= cardCosts[_card].mul(_amount), "not enough TINGs to redeem for a ting");
+        require(smolStudio.totalSupply(_card).add(_amount) <= smolStudio.maxSupply(_card), "max cards minted");
+
+        Ting.burn(msg.sender, cardCosts[_card].mul(_amount));
+        smolStudio.mint(msg.sender, _card, _amount, "");
+        emit Redeemed(msg.sender, cardCosts[_card].mul(_amount));
+    }
+    
         // Transfer multiple cards from Mart to the user wallet (need the cards to be minted to Mart first)
-    function redeemMultiple(uint256[] memory _cardIds, uint256[] memory _amounts) public {
+    function transferMultiple(uint256[] memory _cardIds, uint256[] memory _amounts) public {
         uint256 totalCost = 0;
         for (uint256 i = 0; i < _cardIds.length; ++i) {
             require(cardCosts[_cardIds[i]] != 0, "card not found");
