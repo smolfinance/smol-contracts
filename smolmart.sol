@@ -171,7 +171,7 @@ contract SmolMart is Ownable {
     SmolTing public Ting;
     mapping(uint256 => uint256) public cardCosts;
 
-    event CardAdded(uint256[] cardIds, uint256[] points);
+    event CardAdded(uint256[] cardIds, uint256 points);
     event Redeemed(address indexed user, uint256 amount);
 
     constructor(SmolStudio _SmolStudioAddress, SmolTing _tingAddress) public {
@@ -179,12 +179,11 @@ contract SmolMart is Ownable {
         Ting = _tingAddress;
     }
 
-    function addCard(uint256[] memory _cardIds, uint256[] memory _amounts) public onlyOwner {
-        require(_cardIds.length == _amounts.length, "_cardIds and _amounts have different length");
+    function addCard(uint256[] memory _cardIds, uint256 _amount) public onlyOwner {
         for (uint256 i = 0; i < _cardIds.length; ++i) {
-            cardCosts[_cardIds[i]] = _amounts[i];
+            cardCosts[_cardIds[i]] = _amount;
         }
-        emit CardAdded(_cardIds, _amounts);
+        emit CardAdded(_cardIds, _amount);
     }
 
         // Mint 1 card directly to the user wallet from Studio 
