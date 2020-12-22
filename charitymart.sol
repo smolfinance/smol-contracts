@@ -137,9 +137,10 @@ interface SmolStudio {
 }
 
 
-contract SmolMart is Ownable {
+contract SmolMart2 is Ownable {
     SmolStudio public smolStudio;
     mapping(uint256 => uint256) public cardCosts;
+    mapping(uint256 => bool) public isGiveAwayCard;
 
     event CardAdded(uint256 card, uint256 points);
     event Redeemed(address indexed user, uint256 amount);
@@ -152,9 +153,16 @@ contract SmolMart is Ownable {
         cardCosts[cardId] = amount;
         emit CardAdded(cardId, amount);
     }
+  
+    function addGiveAwayCard(uint256 cardId) public onlyOwner {
+        isGiveAwayCard[cardId] = true;
+        cardCosts[cardId] = 0;
+    } 
 
     function redeem(uint256 card) payable public {
-        require(cardCosts[card] != 0, "card not found");
+        if(isGiveAwayCard[card] == false) {
+            require(cardCosts[card] != 0, "card not found");
+        } 
         require(msg.value == cardCosts[card], "wrong price");
         require(smolStudio.totalSupply(card) < smolStudio.maxSupply(card), "max cards minted");
 
