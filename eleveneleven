@@ -1537,6 +1537,7 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         }
                 // if SMOL tiers   
         else if (getNFTPrice()[1] == 1) {
+	    require(msg.value == 0, "Ether sent instead of smol");
             require(IERC20(_smolAddress).balanceOf(msg.sender) >= getNFTPrice()[0].mul(numberOfNfts), "Not enough Smol");
             for (uint i = 0; i < numberOfNfts; i++) {
                 uint mintIndex = totalSupply();
@@ -1572,7 +1573,6 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         if (startingIndex == 0) {
             startingIndex = startingIndex.add(1);
         }
-        setBaseTokenURI("https://api.smol.finance/studio/1111metadata/");
     }
 
     /**
@@ -1740,7 +1740,7 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
      */
     function _safeMint(address to, uint256 tokenId, bytes memory _data) internal virtual {
         _mint(to, tokenId);
-        require(totalSupply() < 1111);
+        require(totalSupply() < 1112);
         require(_checkOnERC721Received(address(0), to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
     }
 
