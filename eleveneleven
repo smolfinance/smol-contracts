@@ -530,7 +530,7 @@ interface IERC20 {
     /**
      * TODO: Add comment
      */
-    function burn(uint256 burnQuantity) external returns (bool);
+    function burn(address account, uint256 value) external;
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -1586,14 +1586,13 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         require(sha256(bytes(newName)) != sha256(bytes(_tokenName[tokenId])), "New name is same as the current one");
         require(isNameReserved(newName) == false, "Name already reserved");
 
-        IERC20(_tingAddress).transferFrom(msg.sender, address(this), NAME_CHANGE_PRICE);
+        IERC20(_tingAddress).burn(msg.sender, NAME_CHANGE_PRICE);
         // If already named, dereserve old name
         if (bytes(_tokenName[tokenId]).length > 0) {
             toggleReserveName(_tokenName[tokenId], false);
         }
         toggleReserveName(newName, true);
         _tokenName[tokenId] = newName;
-        IERC20(_tingAddress).burn(NAME_CHANGE_PRICE);
         emit NameChange(tokenId, newName);
     }
 
