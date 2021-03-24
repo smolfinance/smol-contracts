@@ -1278,6 +1278,8 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
 
     // Public variables
 
+    string public constant SMOL1111_PROVENANCE = "df760c771ad006eace0d705383b74158967e78c6e980b35f670249b5822c42e1";
+
     uint256 public constant SALE_START_TIMESTAMP = 1614624600;          // CHANGE IT BEFORE DEPLOYMENT
 
     // Time after which smols are randomized and allotted
@@ -1472,7 +1474,8 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         uint256 currentSupply = totalSupply();
 
         if (currentSupply == 1110) {
-            return [uint256(1000000000000000000),0]; // 1110 1 ETH
+            require(msg.sender == owner(), "giveaway: not owner");
+            return [uint256(0),0];                            // Free for owner via giveaway
         } else if (currentSupply >= 1100) {
             return [uint256(6000000000000000000),1]; // 1100 - 1109 6 SMOL
         } else if (currentSupply >= 1000) {
