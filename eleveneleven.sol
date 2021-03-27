@@ -1525,7 +1525,7 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
     function mintNFT(uint256 numberOfNfts) public payable {
         require(totalSupply() < MAX_NFT_SUPPLY, "Sale has already ended");
         require(numberOfNfts > 0, "numberOfNfts cannot be 0");
-        require(numberOfNfts <= 10, "You may not buy more than 5 NFTs at once");
+        require(numberOfNfts <= 5, "You may not buy more than 5 NFTs at once");
         require(totalSupply().add(numberOfNfts) <= MAX_NFT_SUPPLY, "Exceeds MAX_NFT_SUPPLY");
                 // if ETH tiers
         if (getNFTPrice()[1] == 0) {    
