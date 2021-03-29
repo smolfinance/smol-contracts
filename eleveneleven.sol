@@ -1473,33 +1473,33 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
 
         uint256 currentSupply = totalSupply();
 
-        if (currentSupply == 1110) {
+        if (currentSupply >= 1100) {
+            return [uint256(1000000000000000000),1]; // 1100 - 1110 1 SMOL
+        } else if (currentSupply >= 1001) {
+            return [uint256(650000000000000000),0]; // 1000 - 1099 0.65 ETH
+        } else if (currentSupply >= 901) {
+            return [uint256(2000000000000000000),1]; // 900 - 999 2 SMOL
+        } else if (currentSupply >= 801) {
+            return [uint256(550000000000000000),0]; // 800 - 999 0.55 ETH
+        } else if (currentSupply >= 701) {
+            return [uint256(3000000000000000000),1]; // 700 - 799 3 SMOL
+        } else if (currentSupply >= 601) {
+            return [uint256(450000000000000000),0]; // 600 - 699 0.45 ETH
+        } else if (currentSupply >= 501) {
+            return [uint256(4000000000000000000),1]; // 500 - 599 4 SMOL
+        } else if (currentSupply >= 401) {
+            return [uint256(350000000000000000),0]; // 400 - 499 0.35 ETH
+        } else if (currentSupply >= 301) {
+            return [uint256(5000000000000000000),1]; // 300 - 399 5 SMOL
+        } else if (currentSupply >= 201) {
+            return [uint256(250000000000000000),0]; // 200 - 299 0.25 ETH
+        } else if (currentSupply >= 101) {
+            return [uint256(6000000000000000000),1]; // 100 - 199 6 SMOL
+        } else if (currentSupply >= 1 ) {
+            return [uint256(150000000000000000),0]; // 0 - 99 0.15 ETH 
+        } else {
             require(msg.sender == owner(), "giveaway: not owner");
             return [uint256(0),0];                            // Free for owner via giveaway
-        } else if (currentSupply >= 1100) {
-            return [uint256(1000000000000000000),1]; // 1100 - 1109 6 SMOL
-        } else if (currentSupply >= 1000) {
-            return [uint256(650000000000000000),0]; // 1000 - 1099 0.65 ETH
-        } else if (currentSupply >= 900) {
-            return [uint256(2000000000000000000),1]; // 900 - 999 7 SMOL
-        } else if (currentSupply >= 800) {
-            return [uint256(550000000000000000),0]; // 800 - 999 0.55 ETH
-        } else if (currentSupply >= 700) {
-            return [uint256(3000000000000000000),1]; // 700 - 799 8 SMOL
-        } else if (currentSupply >= 600) {
-            return [uint256(450000000000000000),0]; // 600 - 699 0.45 ETH
-        } else if (currentSupply >= 500) {
-            return [uint256(4000000000000000000),1]; // 500 - 599 9 SMOL
-        } else if (currentSupply >= 400) {
-            return [uint256(350000000000000000),0]; // 400 - 499 0.35 ETH
-        } else if (currentSupply >= 300) {
-            return [uint256(5000000000000000000),1]; // 300 - 399 10 SMOL
-        } else if (currentSupply >= 200) {
-            return [uint256(250000000000000000),0]; // 200 - 299 0.25 ETH
-        } else if (currentSupply >= 100) {
-            return [uint256(6000000000000000000),1]; // 100 - 199 11 SMOL
-        } else {
-            return [uint256(150000000000000000),0]; // 0 - 99 0.15 ETH 
         }
     }
 
