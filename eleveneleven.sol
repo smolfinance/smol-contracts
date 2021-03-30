@@ -1503,29 +1503,13 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         }
     }
 
-/*    
--100 for sale for 0.15 ETH
--100 for sale for 11 SMOL
--100 for sale for 0.25 ETH
--100 for sale for 10 SMOL
--100 for sale for 0.35 ETH
--100 for sale for 9 SMOL
--100 for sale for 0.45 ETH
--100 for sale for 8 SMOL
--100 for sale for 0.55 ETH
--100 for sale for 7 SMOL
--100 for sale for 0.65 ETH
--10 for sale for 6 SMOL
--1 for sale for 1 ETH
-*/
-
     /**
     * @dev Mints Smols
     */
     function mintNFT(uint256 numberOfNfts) public payable {
         require(totalSupply() < MAX_NFT_SUPPLY, "Sale has already ended");
         require(numberOfNfts > 0, "numberOfNfts cannot be 0");
-        require(numberOfNfts <= 20, "You may not buy more than 5 NFTs at once");
+        require(numberOfNfts <= 20, "You may not buy more than 20 NFTs at once");
         require(totalSupply().add(numberOfNfts) <= MAX_NFT_SUPPLY, "Exceeds MAX_NFT_SUPPLY");
                 // if ETH tiers
         if (getNFTPrice()[1] == 0) {    
