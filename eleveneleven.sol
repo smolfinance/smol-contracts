@@ -1280,10 +1280,10 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
 
     string public constant SMOL1111_PROVENANCE = "df760c771ad006eace0d705383b74158967e78c6e980b35f670249b5822c42e1";
 
-    uint256 public constant SALE_START_TIMESTAMP = 1614624600;          // CHANGE IT BEFORE DEPLOYMENT
+    uint256 public constant SALE_START_TIMESTAMP = 1617120671;   // 2021, March 30 at 11:11:11 CDT (UTC -5)
 
     // Time after which smols are randomized and allotted
-    uint256 public constant REVEAL_TIMESTAMP = SALE_START_TIMESTAMP + (86400 * 14); 
+    uint256 public constant REVEAL_TIMESTAMP = SALE_START_TIMESTAMP + (86400 * 11);
 
     uint256 public constant NAME_CHANGE_PRICE = 1111 * (10 ** 18);
 
@@ -1474,25 +1474,25 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         uint256 currentSupply = totalSupply();
 
         if (currentSupply >= 1096) {
-            return [uint256(5000000000000000000),1]; // 1100 - 1110 1 SMOL
+            return [uint256(5000000000000000000),1]; // 1096 - 1110 1 SMOL
         } else if (currentSupply >= 1076) {
-            return [uint256(650000000000000000),0]; // 1000 - 1099 0.65 ETH
+            return [uint256(650000000000000000),0]; // 1076 - 1095 0.65 ETH
         } else if (currentSupply >= 1026) {
-            return [uint256(5000000000000000000),1]; // 900 - 999 5 SMOL
+            return [uint256(5000000000000000000),1]; // 1026 - 1075 5 SMOL
         } else if (currentSupply >= 976) {
-            return [uint256(550000000000000000),0]; // 800 - 999 0.55 ETH
+            return [uint256(550000000000000000),0]; // 976 - 1025 0.55 ETH
         } else if (currentSupply >= 926) {
-            return [uint256(5000000000000000000),1]; // 700 - 799 5 SMOL
+            return [uint256(5000000000000000000),1]; // 926 - 975 5 SMOL
         } else if (currentSupply >= 826) {
-            return [uint256(450000000000000000),0]; // 600 - 699 0.45 ETH
+            return [uint256(450000000000000000),0]; // 826 - 925 0.45 ETH
         } else if (currentSupply >= 776) {
-            return [uint256(5000000000000000000),1]; // 500 - 599 5 SMOL
+            return [uint256(5000000000000000000),1]; // 776 - 825 5 SMOL
         } else if (currentSupply >= 626) {
-            return [uint256(350000000000000000),0]; // 400 - 499 0.35 ETH
+            return [uint256(350000000000000000),0]; // 626 - 775 0.35 ETH
         } else if (currentSupply >= 551) {
-            return [uint256(5000000000000000000),1]; // 300 - 399 5 SMOL
+            return [uint256(5000000000000000000),1]; // 551 - 625 5 SMOL
         } else if (currentSupply >= 326) {
-            return [uint256(250000000000000000),0]; // 250 - 326 0.25 ETH
+            return [uint256(250000000000000000),0]; // 327 - 550 0.25 ETH
         } else if (currentSupply >= 251) {
             return [uint256(5000000000000000000),1]; // 252 - 326 5 SMOL
         } else if (currentSupply >= 1 ) {
