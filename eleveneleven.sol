@@ -1476,27 +1476,27 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
         if (currentSupply >= 1096) {
             return [uint256(5000000000000000000),1]; // 1096 - 1110 1 SMOL
         } else if (currentSupply >= 1076) {
-            return [uint256(650000000000000000),0]; // 1076 - 1095 0.65 ETH
+            return [uint256(666600000000000000),0]; // 1076 - 1095 0.65 ETH
         } else if (currentSupply >= 1026) {
             return [uint256(5000000000000000000),1]; // 1026 - 1075 5 SMOL
         } else if (currentSupply >= 976) {
-            return [uint256(550000000000000000),0]; // 976 - 1025 0.55 ETH
+            return [uint256(555500000000000000),0]; // 976 - 1025 0.55 ETH
         } else if (currentSupply >= 926) {
             return [uint256(5000000000000000000),1]; // 926 - 975 5 SMOL
         } else if (currentSupply >= 826) {
-            return [uint256(450000000000000000),0]; // 826 - 925 0.45 ETH
+            return [uint256(444400000000000000),0]; // 826 - 925 0.45 ETH
         } else if (currentSupply >= 776) {
             return [uint256(5000000000000000000),1]; // 776 - 825 5 SMOL
         } else if (currentSupply >= 626) {
-            return [uint256(350000000000000000),0]; // 626 - 775 0.35 ETH
+            return [uint256(333300000000000000),0]; // 626 - 775 0.35 ETH
         } else if (currentSupply >= 551) {
             return [uint256(5000000000000000000),1]; // 551 - 625 5 SMOL
         } else if (currentSupply >= 326) {
-            return [uint256(250000000000000000),0]; // 327 - 550 0.25 ETH
+            return [uint256(222200000000000000),0]; // 327 - 550 0.25 ETH
         } else if (currentSupply >= 251) {
             return [uint256(5000000000000000000),1]; // 252 - 326 5 SMOL
         } else if (currentSupply >= 1 ) {
-            return [uint256(150000000000000000),0]; // 1 - 251 0.15 ETH 
+            return [uint256(111100000000000000),0]; // 1 - 251 0.15 ETH 
         } else {
             require(msg.sender == owner(), "giveaway: not owner");
             return [uint256(0),0];                            // Free for owner via giveaway
