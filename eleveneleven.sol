@@ -1278,7 +1278,7 @@ contract ElevenEleven is Context, Ownable, ERC165, IElevenEleven, IERC721Metadat
 
     // Public variables
 
-    string public constant SMOL1111_PROVENANCE = "df760c771ad006eace0d705383b74158967e78c6e980b35f670249b5822c42e1";
+    string public constant SMOL1111_PROVENANCE = "cd61f013c65c0e5459aa8deff0a87079fca0de310f6d2ac3b9add99120cd979e";
 
     uint256 public constant SALE_START_TIMESTAMP = 1617120671;   // 2021, March 30 at 11:11:11 CDT (UTC -5)
 
